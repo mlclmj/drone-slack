@@ -107,7 +107,7 @@ func (p *Plugin) Execute() error {
 	logrus.WithFields(logrus.Fields{
 		"channel":  msg.Channel,
 		"username": msg.Username,
-		"text": attachment.Text
+		"text": attachment.Text,
 	}).Info("sending message")
 	err := slack.PostWebhookCustomHTTPContext(p.network.Context, p.settings.Webhook, p.network.Client, &msg)
 	if err != nil {
