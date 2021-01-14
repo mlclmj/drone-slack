@@ -3,7 +3,6 @@ def main(ctx):
 
   stages = [
     linux(ctx, 'amd64'),
-    linux(ctx, 'arm64'),
     linux(ctx, 'arm'),
   ]
 
