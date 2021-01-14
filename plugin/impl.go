@@ -82,8 +82,10 @@ func (p *Plugin) Execute() error {
 		if err != nil {
 			return fmt.Errorf("could not read template file: %w", err)
 		}
+		logrus.WithFields(logrus.Fields{
+			"template_raw": data,
+		}).Info("loaded template file")
 		p.settings.Template = string(data)
-		fmt.
 	}
 
 	if p.settings.Template != "" {
