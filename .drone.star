@@ -104,7 +104,7 @@ def testing(ctx):
 def linux(ctx, arch):
   docker = {
     'dockerfile': 'docker/Dockerfile.linux.%s' % (arch),
-    'repo': 'plugins/slack',
+    'repo': 'mlclmj/drone-slack',
     'username': {
       'from_secret': 'docker_username',
     },
