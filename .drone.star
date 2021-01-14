@@ -5,12 +5,9 @@ def main(ctx):
     linux(ctx, 'amd64'),
     linux(ctx, 'arm64'),
     linux(ctx, 'arm'),
-    windows(ctx, '1909'),
-    windows(ctx, '1903'),
-    windows(ctx, '1809'),
   ]
 
-  after = manifest(ctx) + gitter(ctx)
+  after = manifest(ctx)
 
   for b in before:
     for s in stages:
@@ -191,96 +188,6 @@ def linux(ctx, arch):
     },
   }
 
-def windows(ctx, version):
-  docker = [
-    'echo $env:PASSWORD | docker login --username $env:USERNAME --password-stdin',
-  ]
-
-  if ctx.build.event == 'tag':
-    build = [
-      'go build -v -ldflags "-X main.version=%s" -a -tags netgo -o release/windows/amd64/drone-slack.exe ./cmd/drone-slack' % (ctx.build.ref.replace("refs/tags/v", "")),
-    ]
-
-    docker = docker + [
-      'docker build --pull -f docker/Dockerfile.windows.%s -t plugins/slack:%s-windows-%s-amd64 .' % (version, ctx.build.ref.replace("refs/tags/v", ""), version),
-      'docker run --rm plugins/slack:%s-windows-%s-amd64 --help' % (ctx.build.ref.replace("refs/tags/v", ""), version),
-      'docker push plugins/slack:%s-windows-%s-amd64' % (ctx.build.ref.replace("refs/tags/v", ""), version),
-    ]
-  else:
-    build = [
-      'go build -v -ldflags "-X main.version=%s" -a -tags netgo -o release/windows/amd64/drone-slack.exe ./cmd/drone-slack' % (ctx.build.commit[0:8]),
-    ]
-
-    docker = docker + [
-      'docker build --pull -f docker/Dockerfile.windows.%s -t plugins/slack:windows-%s-amd64 .' % (version, version),
-      'docker run --rm plugins/slack:windows-%s-amd64 --help' % (version),
-      'docker push plugins/slack:windows-%s-amd64' % (version),
-    ]
-
-  return {
-    'kind': 'pipeline',
-    'type': 'ssh',
-    'name': 'windows-%s' % (version),
-    'platform': {
-      'os': 'windows',
-    },
-    'server': {
-      'host': {
-        'from_secret': 'windows_server_%s' % (version),
-      },
-      'user': {
-        'from_secret': 'windows_username',
-      },
-      'password': {
-        'from_secret': 'windows_password',
-      },
-    },
-    'steps': [
-      {
-        'name': 'environment',
-        'environment': {
-          'CGO_ENABLED': '0',
-        },
-        'commands': [
-          'go version',
-          'go env',
-        ],
-      },
-      {
-        'name': 'build',
-        'environment': {
-          'CGO_ENABLED': '0',
-        },
-        'commands': build,
-      },
-      {
-        'name': 'executable',
-        'commands': [
-          './release/windows/amd64/drone-slack.exe --help',
-        ],
-      },
-      {
-        'name': 'docker',
-        'environment': {
-          'USERNAME': {
-            'from_secret': 'docker_username',
-          },
-          'PASSWORD': {
-            'from_secret': 'docker_password',
-          },
-        },
-        'commands': docker,
-      },
-    ],
-    'depends_on': [],
-    'trigger': {
-      'ref': [
-        'refs/heads/master',
-        'refs/tags/**',
-      ],
-    },
-  }
-
 def manifest(ctx):
   return [{
     'kind': 'pipeline',
@@ -303,56 +210,12 @@ def manifest(ctx):
           'ignore_missing': 'true',
         },
       },
-      {
-        'name': 'microbadger',
-        'image': 'plugins/webhook',
-        'pull': 'always',
-        'settings': {
-          'urls': {
-            'from_secret': 'microbadger_url',
-          },
-        },
-      },
     ],
     'depends_on': [],
     'trigger': {
       'ref': [
         'refs/heads/master',
         'refs/tags/**',
-      ],
-    },
-  }]
-
-def gitter(ctx):
-  return [{
-    'kind': 'pipeline',
-    'type': 'docker',
-    'name': 'gitter',
-    'clone': {
-      'disable': True,
-    },
-    'steps': [
-      {
-        'name': 'gitter',
-        'image': 'plugins/gitter',
-        'pull': 'always',
-        'settings': {
-          'webhook': {
-            'from_secret': 'gitter_webhook',
-          }
-        },
-      },
-    ],
-    'depends_on': [
-      'manifest',
-    ],
-    'trigger': {
-      'ref': [
-        'refs/heads/master',
-        'refs/tags/**',
-      ],
-      'status': [
-        'failure',
       ],
     },
   }]
