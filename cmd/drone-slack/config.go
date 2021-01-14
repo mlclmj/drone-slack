@@ -44,6 +44,12 @@ func settingsFlags(settings *plugin.Settings) []cli.Flag {
 			Destination: &settings.Template,
 		},
 		&cli.StringFlag{
+			Name:        "template_file",
+			Usage:       "slack template file",
+			EnvVars:     []string{"PLUGIN_TEMPLATE_FILE"},
+			Destination: &settings.Template,
+		},
+		&cli.StringFlag{
 			Name:        "fallback",
 			Usage:       "slack fallback",
 			EnvVars:     []string{"PLUGIN_FALLBACK"},

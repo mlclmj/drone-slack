@@ -8,6 +8,7 @@ package plugin
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/drone-plugins/drone-plugin-lib/drone"
@@ -19,16 +20,17 @@ import (
 type (
 	// Settings for the plugin.
 	Settings struct {
-		Webhook   string
-		Channel   string
-		Recipient string
-		Username  string
-		Template  string
-		Fallback  string
-		ImageURL  string
-		IconURL   string
-		IconEmoji string
-		Color     string
+		Webhook      string
+		Channel      string
+		Recipient    string
+		Username     string
+		Template     string
+		TemplateFile string
+		Fallback     string
+		ImageURL     string
+		IconURL      string
+		IconEmoji    string
+		Color        string
 	}
 )
 
@@ -73,6 +75,14 @@ func (p *Plugin) Execute() error {
 		msg.Channel = prepend("@", p.settings.Recipient)
 	} else if p.settings.Channel != "" {
 		msg.Channel = prepend("#", p.settings.Channel)
+	}
+
+	if p.settings.TemplateFile != "" {
+		data, err := ioutil.ReadFile(p.settings.TemplateFile)
+		if err != nil {
+			return fmt.Errorf("could not read template file: %w", err)
+		}
+		p.settings.Template = string(data)
 	}
 
 	if p.settings.Template != "" {
