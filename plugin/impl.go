@@ -83,14 +83,21 @@ func (p *Plugin) Execute() error {
 			return fmt.Errorf("could not read template file: %w", err)
 		}
 		p.settings.Template = string(data)
+		fmt.
 	}
 
 	if p.settings.Template != "" {
+		logrus.WithFields(logrus.Fields{
+			"template": p.settings.Template,
+		}).Info("parsed template")
 		var err error
 		attachment.Text, err = templateMessage(p.settings.Template, p.pipeline)
 		if err != nil {
 			return fmt.Errorf("could not create template message: %w", err)
 		}
+		logrus.WithFields(logrus.Fields{
+			"text": attachment.Text,
+		}).Info("completed message")
 	} else {
 		attachment.Text = message(p.pipeline)
 	}
@@ -98,6 +105,7 @@ func (p *Plugin) Execute() error {
 	logrus.WithFields(logrus.Fields{
 		"channel":  msg.Channel,
 		"username": msg.Username,
+		"text": attachment.Text
 	}).Info("sending message")
 	err := slack.PostWebhookCustomHTTPContext(p.network.Context, p.settings.Webhook, p.network.Client, &msg)
 	if err != nil {
